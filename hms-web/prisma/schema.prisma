@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("PATIENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  doctorProfile Doctor?
+  patientProfile Patient?
+}
+
+model Doctor {
+  id             String @id @default(cuid())
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id])
+  specialization String
+  availability   String? // Store as JSON or simple string for now
+  
+  appointments   Appointment[]
+  admissions     Admission[]
+  image          String? // URL to profile photo
+}
+
+model Patient {
+  id             String   @id @default(cuid())
+  userId         String?  @unique // Optional: Patient might not have a login yet
+  user           User?    @relation(fields: [userId], references: [id])
+  
+  name           String
+  dateOfBirth    DateTime?
+  gender         String?
+  phone          String?
+  address        String?
+  
+  medicalHistory String?
+  
+  appointments   Appointment[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  admissions     Admission[]
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  bookingToken String            @unique @default(cuid()) // User-facing ID
+  date         DateTime
+  reason    String?
+  notes     String? // Prescriptions/Notes
+  status    String            @default("PENDING")
+  
+  doctorId  String
+  doctor    Doctor            @relation(fields: [doctorId], references: [id])
+  
+  patientId String
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model Admission {
+  id            String    @id @default(cuid())
+  admissionDate DateTime  @default(now())
+  dischargeDate DateTime?
+  roomNumber    String
+  floor         String?
+  diagnosis     String
+  notes         String?   // For daily rounds/medications
+  status        String    @default("ADMITTED") // ADMITTED, DISCHARGED
+
+  patientId     String
+  patient       Patient   @relation(fields: [patientId], references: [id])
+
+  doctorId      String
+  doctor        Doctor    @relation(fields: [doctorId], references: [id])
+
+  roomId        String?
+  room          Room?     @relation(fields: [roomId], references: [id])
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Room {
+  id         String      @id @default(cuid())
+  number     String      @unique
+  type       String      // "ICU", "GENERAL", "PRIVATE", "SEMI_PRIVATE"
+  floor      String      
+  price      Float?
+  status     String      @default("AVAILABLE") // "AVAILABLE", "OCCUPIED", "MAINTENANCE"
+  
+  admissions Admission[]
+  
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Staff {
+  id          String   @id @default(cuid())
+  name        String
+  role        String   // "NURSE", "CLEANER", "RECEPTIONIST"
+  department  String?
+  shift       String?  // "MORNING", "EVENING", "NIGHT"
+  contact     String?
+  
+  userId      String?  @unique // Optional link to user login if they need one
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
