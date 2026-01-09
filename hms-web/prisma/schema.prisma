@@ -118,6 +118,7 @@ model Staff {
   department  String?
   shift       String?  // "MORNING", "EVENING", "NIGHT"
   contact     String?
+  image       String? // URL to profile photo
   
   userId      String?  @unique // Optional link to user login if they need one
   

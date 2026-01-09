@@ -63,7 +63,12 @@ export async function adminSeed() {
 export async function getRooms() {
     return await prisma.room.findMany({
         orderBy: { number: 'asc' },
-        include: { admissions: { where: { status: "ADMITTED" } } }
+        include: {
+            admissions: {
+                where: { status: "ADMITTED" },
+                include: { patient: true }
+            }
+        }
     });
 }
 
@@ -168,4 +173,57 @@ export async function updateAppointmentDate(appointmentId: string, newDate: stri
         console.error("Failed to update appointment:", error);
         return { success: false, error: "Failed to update" };
     }
+}
+
+export async function createStaff(formData: FormData) {
+    const name = formData.get("name") as string;
+    const role = formData.get("role") as string;
+    const department = formData.get("department") as string;
+    const shift = formData.get("shift") as string;
+    const image = formData.get("image") as string;
+
+    await prisma.staff.create({
+        data: {
+            name,
+            role,
+            department,
+            shift,
+            image
+        }
+    });
+
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+}
+
+export async function updateStaff(staffId: string, data: { name: string, role: string, department: string, shift: string, image: string }) {
+    await prisma.staff.update({
+        where: { id: staffId },
+        data: {
+            name: data.name,
+            role: data.role,
+            department: data.department,
+            shift: data.shift,
+            image: data.image
+        }
+    });
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+}
+
+export async function updateDoctor(doctorId: string, data: { name: string, specialization: string, image: string }) {
+    await prisma.doctor.update({
+        where: { id: doctorId },
+        data: {
+            specialization: data.specialization,
+            image: data.image,
+            user: {
+                update: {
+                    name: data.name
+                }
+            }
+        }
+    });
+    revalidatePath('/admin/dashboard');
+    return { success: true };
 }
