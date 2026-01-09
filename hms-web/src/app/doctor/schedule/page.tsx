@@ -68,7 +68,7 @@ export default function SchedulePage() {
                                     <Calendar className="mr-2 h-5 w-5" /> {date}
                                 </h3>
                                 <div className="space-y-4">
-                                    {appts.map((apt: any) => (
+                                    {(appts as any[]).map((apt: any) => (
                                         <AppointmentCard key={apt.id} apt={apt} />
                                     ))}
                                 </div>
